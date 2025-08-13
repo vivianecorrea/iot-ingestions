@@ -1,4 +1,4 @@
-CREATE OR REFRESH STREAMING TABLE sandbox_first_catalog.transports.transports_bronze
+CREATE OR REFRESH STREAMING TABLE sandbox_first_catalog.transports.rides_bronze
 AS SELECT *
 FROM STREAM read_files(
   '/Volumes/sandbox_first_catalog/transports/landing-zone/',
@@ -16,20 +16,20 @@ FROM STREAM read_files(
   """,
   schemaEvolutionMode => "none");
 
-CREATE OR REFRESH  STREAMING TABLE sandbox_first_catalog.transports.transports_silver(
+CREATE OR REFRESH  STREAMING TABLE sandbox_first_catalog.transports.rides_silver(
 CONSTRAINT valid_start_date EXPECT (DATA_INICIO IS NOT NULL),
 CONSTRAINT valid_distance EXPECT (DISTANCIA IS NOT NULL)
 )
 COMMENT "Dados de corridas aplicativo"
 AS SELECT 
-  date_format(to_timestamp(DATA_INICIO, 'dd-MM-yyyy HH:mm'), 'yyyy-MM-dd') AS DATA_INICIO,
-  date_format(to_timestamp(DATA_FIM, 'dd-MM-yyyy HH:mm'), 'yyyy-MM-dd') AS DATA_FIM,
+  date_format(to_timestamp(DATA_INICIO, 'MM-dd-yyyy H:mm'), 'yyyy-MM-dd') AS DATA_INICIO,
+  date_format(to_timestamp(DATA_FIM, 'MM-dd-yyyy H:mm'), 'yyyy-MM-dd') AS DATA_FIM,
   DOUBLE(DISTANCIA) AS DISTANCIA, 
   PROPOSITO, 
   CATEGORIA
-FROM STREAM sandbox_first_catalog.transports.transports_bronze;
+FROM STREAM sandbox_first_catalog.transports.rides_bronze;
 
-CREATE OR REFRESH STREAMING TABLE sandbox_first_catalog.transports.transports_gold
+CREATE OR REFRESH STREAMING TABLE sandbox_first_catalog.transports.rides_daily_info_gold
 COMMENT "Dados agrupados pela data de início do transporte "
 SELECT
   DATA_INICIO AS DT_REFE,
@@ -44,5 +44,5 @@ SELECT
         WHEN PROPOSITO IS NOT NULL AND PROPOSITO  <> 'Reuniao'
         THEN 1 ELSE 0
       END)                                                        AS QT_CORR_NAO_REUNI
-FROM STREAM sandbox_first_catalog.transports.transports_silver
+FROM STREAM sandbox_first_catalog.transports.rides_silver
 GROUP BY DT_REFE
