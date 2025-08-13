@@ -1,8 +1,8 @@
-from jobs.base import Stage
 from pyspark.sql import DataFrame, SparkSession
 
-from assignment_1.assets.constants import LANDING_PATH, TBL_BRONZE
-from assignment_1.assets.schemas import BRONZE_SCHEMA
+from assignment_1.rides_ingestion.src.base import Stage
+from assignment_1.rides_ingestion.src.constants import LANDING_PATH, TBL_BRONZE
+from assignment_1.rides_ingestion.src.schemas import BRONZE_SCHEMA
 
 spark = SparkSession.builder.getOrCreate()
 

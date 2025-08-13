@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from pyspark.sql import DataFrame
 
-from assignment_1.assets.constants import CHECKPOINT
+from assignment_1.rides_ingestion.src.constants import CHECKPOINT
 
 
 class Stage(ABC):
