@@ -9,9 +9,9 @@ FROM STREAM read_files(
     DATA_INICIO STRING,
     DATA_FIM STRING,
     CATEGORIA STRING,
-    LOCAL_INICIO STRING, 
-    LOCAL_FIM STRING, 
-    DISTANCIA STRING, 
+    LOCAL_INICIO STRING,
+    LOCAL_FIM STRING,
+    DISTANCIA STRING,
     PROPOSITO STRING
   """,
   schemaEvolutionMode => "none");
@@ -21,11 +21,11 @@ CONSTRAINT valid_start_date EXPECT (DATA_INICIO IS NOT NULL),
 CONSTRAINT valid_distance EXPECT (DISTANCIA IS NOT NULL)
 )
 COMMENT "Dados de corridas aplicativo"
-AS SELECT 
+AS SELECT
   date_format(to_timestamp(DATA_INICIO, 'MM-dd-yyyy H:mm'), 'yyyy-MM-dd') AS DATA_INICIO,
   date_format(to_timestamp(DATA_FIM, 'MM-dd-yyyy H:mm'), 'yyyy-MM-dd') AS DATA_FIM,
-  DOUBLE(DISTANCIA) AS DISTANCIA, 
-  PROPOSITO, 
+  DOUBLE(DISTANCIA) AS DISTANCIA,
+  PROPOSITO,
   CATEGORIA
 FROM STREAM sandbox_first_catalog.transports.rides_bronze;
 
