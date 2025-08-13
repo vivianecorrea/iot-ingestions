@@ -15,62 +15,20 @@ from pyspark.sql.functions import (
     sum,
     to_timestamp,
 )
-from pyspark.sql.types import StringType, StructField, StructType
 
-CATALOG = "sandbox_first_catalog"
-SCHEMA = "transports"
-
-LANDING_PATH = "/Volumes/sandbox_first_catalog/transports/landing-zone/"
-CHECKPOINT_ROOT = f"/Volumes/{CATALOG}/{SCHEMA}/_checkpoints"
-
-TBL_BRONZE = f"{CATALOG}.{SCHEMA}.rides_bronze"
-TBL_SILVER = f"{CATALOG}.{SCHEMA}.rides_silver"
-TBL_GOLD = f"{CATALOG}.{SCHEMA}.rides_daily_info_gold"
-
-
-class SourceCollumns:
-    DATA_INICIO = "DATA_INICIO"
-    DATA_FIM = "DATA_FIM"
-    CATEGORIA = "CATEGORIA"
-    LOCAL_INICIO = "LOCAL_INICIO"
-    LOCAL_FIM = "LOCAL_FIM"
-    DISTANCIA = "DISTANCIA"
-    PROPOSITO = "PROPOSITO"
-
-
-class SinkCollumns:
-    DT_REFE = "Data de referência."
-    QT_CORR = "Quantidade de corridas."
-    QT_CORR_NEG = "Quantidade de corridas com a categoria Negócio."
-    QT_CORR_PESS = "Quantidade de corridas com a categoria Pessoal."
-    VL_MAX_DIST = "Maior distância percorrida por uma corrida."
-    VL_MIN_DIST = "Menor distância percorrida por uma corrida."
-    VL_AVG_DIST = "Média das distâncias percorridas."
-    QT_CORR_REUNI = "Quantidade de corridas com o propósito de Reunião."
-    QT_CORR_NAO_REUNI = (
-        "Quantidade de corridas com o propósito declarado e diferente de Reunião."
-    )
-
-
-class ProposalEnums:
-    NEGOCIO = "Negocio"
-    PESSOAL = "Pessoal"
-    REUNIAO = "Reuniao"
-
-
-BRONZE_SCHEMA: StructType = StructType(
-    [
-        StructField(SourceCollumns.DATA_INICIO, StringType(), True),
-        StructField(SourceCollumns.DATA_FIM, StringType(), True),
-        StructField(SourceCollumns.CATEGORIA, StringType(), True),
-        StructField(SourceCollumns.LOCAL_INICIO, StringType(), True),
-        StructField(SourceCollumns.LOCAL_FIM, StringType(), True),
-        StructField(SourceCollumns.DISTANCIA, StringType(), True),
-        StructField(SourceCollumns.PROPOSITO, StringType(), True),
-    ]
+from assignment_1.assets.constants import (
+    CHECKPOINT,
+    LANDING_PATH,
+    TBL_BRONZE,
+    TBL_GOLD,
+    TBL_SILVER,
 )
-
-CHECKPOINT = f"/Volumes/{CATALOG}/{SCHEMA}/_checkpoints/rides_bronze"
+from assignment_1.assets.schemas import (
+    BRONZE_SCHEMA,
+    ProposalEnums,
+    SinkCollumns,
+    SourceCollumns,
+)
 
 
 class Stage(ABC):
@@ -90,11 +48,11 @@ class LandingToBronze(Stage):
             .option("header", "true")
             .option("delimiter", ";")
             .schema(BRONZE_SCHEMA)
-            .load(LANDING_PATH)
+            .load(input_path)
         )
         (
             bronze_stream.writeStream.format("delta")
-            .option("checkpointLocation", CHECKPOINT)
+            .option("checkpointLocation", f"{CHECKPOINT}bronze")
             .trigger(availableNow=True)
             .outputMode("append")
             .toTable(TBL_BRONZE)
@@ -133,13 +91,20 @@ class BronzeToSilver(Stage):
                 col(SourceCollumns.PROPOSITO).alias(SourceCollumns.PROPOSITO),
             )
         )
-        return parsed
+        (
+            parsed.writeStream.format("delta")
+            .option("checkpointLocation", f"{CHECKPOINT}silver")
+            .trigger(availableNow=True)
+            .outputMode("update")
+            .toTable(TBL_SILVER)
+        )
 
 
 @dataclass(frozen=True)
 class SilverToGold(Stage):
     def transform(self, df: DataFrame) -> DataFrame:
-        return df.groupBy(
+
+        df_gold = df.groupBy(
             col(SourceCollumns.DATA_INICIO).alias(SinkCollumns.DT_REFE)
         ).agg(
             count("*").alias(SinkCollumns.QT_CORR.name),
@@ -163,4 +128,11 @@ class SilverToGold(Stage):
                     & (col(SourceCollumns.PROPOSITO) != ProposalEnums.REUNIAO)
                 ).cast("int")
             ).alias(SinkCollumns.QT_CORR_NAO_REUNI.name),
+        )
+        (
+            df_gold.writeStream.format("delta")
+            .option("checkpointLocation", f"{CHECKPOINT}gold")
+            .trigger(availableNow=True)
+            .outputMode("complete")
+            .toTable(TBL_GOLD)
         )
