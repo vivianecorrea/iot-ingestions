@@ -1,13 +1,13 @@
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import avg, col, count, max, min, round, sum
 
-from assignment_1.rides_ingestion.src.base import Stage
 from assignment_1.rides_ingestion.src.constants import TBL_GOLD, TBL_SILVER
 from assignment_1.rides_ingestion.src.schemas import (
     ProposalEnums,
     SinkCollumns,
     SourceCollumns,
 )
+from assignment_1.rides_ingestion.src.stage import Stage
 
 spark = SparkSession.builder.getOrCreate()
 

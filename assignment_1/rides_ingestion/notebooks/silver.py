@@ -1,9 +1,9 @@
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, date_format, to_timestamp
 
-from assignment_1.rides_ingestion.src.base import Stage
 from assignment_1.rides_ingestion.src.constants import TBL_BRONZE, TBL_SILVER
 from assignment_1.rides_ingestion.src.schemas import SourceCollumns
+from assignment_1.rides_ingestion.src.stage import Stage
 
 spark = SparkSession.builder.getOrCreate()
 
