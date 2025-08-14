@@ -1,33 +1,31 @@
-# Assignment 2 – IoT Sensor Monitoring on Databricks with Confluent Cloud Kafka
+# Assignment 2 – Monitoramento de Sensores IoT no Databricks com Confluent Cloud Kafka
 
-> **Context**: This subproject lives at `assignment_2/` in the repository. It implements a real‑time ingestion and processing pipeline for simulated IoT sensor events using **Confluent Cloud (managed Kafka)** + **Databricks** (Community or Enterprise) + **Delta/Unity Catalog** following a **medallion** layout (bronze → silver → gold).
+> **Contexto**: Este subprojeto está localizado em `assignment_2/` no repositório. Ele implementa um pipeline de ingestão e processamento em tempo real para eventos simulados de sensores IoT usando **Confluent Cloud (Kafka gerenciado)** + **Databricks** (Community ou Enterprise) + **Delta/Unity Catalog** seguindo um layout **medalhão** (bronze → prata → ouro).
 
 ---
 
-## 1) Overview
+## 1) Visão Geral
 
-* **Goal**: Ingest streaming IoT events (temperature, humidity, geo, device metadata), process them with Spark Structured Streaming on Databricks, and store curated data in Delta tables.
-* **Why this design**: Scalable, fault‑tolerant streaming with exactly‑once semantics into Delta; simple to operate on Databricks; compatible with managed Kafka (Confluent Cloud).
+* **Objetivo**: Ingerir eventos de IoT em streaming (temperatura, umidade, localização, metadados do dispositivo), processá-los com Spark Structured Streaming no Databricks e armazenar os dados curados em tabelas Delta.
+* **Por que este design**: Streaming escalável e tolerante a falhas com semântica exatamente uma vez no Delta; simples de operar no Databricks; compatível com Kafka gerenciado (Confluent Cloud).
 
+## 3) Pré-requisitos
 
-## 3) Prerequisites
+* Cluster no **Confluent Cloud** (Básico ou superior), **um tópico** (ex.: `iot.sensors.v1`) e **Chave/Segredo da API**.
+* Workspace do **Databricks** + cluster com **Spark 3.5+** (ou runtime 13.3+ LTS), DBR suporta conector Kafka.
+* **Unity Catalog** habilitado (recomendado) ou um caminho no DBFS para tabelas Delta.
+* Um **Produtor** local/remoto publicando eventos JSON no tópico (exemplos abaixo).
 
-* **Confluent Cloud** cluster (Basic or above), **one topic** (e.g. `iot.sensors.v1`) and **API Key/Secret**.
-* **Databricks** workspace + cluster with **Spark 3.5+** (or runtime 13.3+ LTS), DBR supports Kafka connector.
-* **Unity Catalog** enabled (recommended) or a DBFS path for Delta tables.
-*  A local/remote **Producer** publishing JSON events to the topic (examples below).
+## 4) Configuração segura
 
+Crie um **escopo de segredo** no Databricks e armazene as credenciais do Confluent:
 
-## 4) Secure configuration
+1. No Databricks (UI do Workspace) → *Compute* → confirme que o cluster está em execução.
+2. Use a interface **Secrets** ou CLI para criar o escopo `confluent-secrets`.
+3. Adicione as chaves:
 
-Create a Databricks **secret scope** and store Confluent credentials:
+    * `confluent.bootstrap.servers = <SEU_HOST_DE_BOOTSTRAP:PORTA>` (ex.: `pkc-xxxxx.us-east-1.aws.confluent.cloud:9092`)
+    * `confluent.api.key = <SUA_CHAVE_API>`
+    * `confluent.api.secret = <SEU_SEGREDO_API>`
 
-1. In Databricks (Workspace UI) → *Compute* → confirm cluster running.
-2. Use the **Secrets** UI or CLI to create scope `confluent-secrets`.
-3. Add keys:
-
-   * `confluent.bootstrap.servers = <YOUR_BOOTSTRAP_HOST:PORT>` (e.g. `pkc-xxxxx.us-east-1.aws.confluent.cloud:9092`)
-   * `confluent.api.key = <YOUR_API_KEY>`
-   * `confluent.api.secret = <YOUR_API_SECRET>`
-
-You will reference secrets in notebooks via `dbutils.secrets.get("confluent-secrets","<key>")`.
+Você fará referência aos segredos nos notebooks via `dbutils.secrets.get("confluent-secrets","<key>")`.
