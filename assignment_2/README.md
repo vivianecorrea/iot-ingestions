@@ -4,15 +4,15 @@
 
 Foi desenvolvido no Databricks, utilizando PySpark Structured Streaming e um serviço gerenciado do Kafka (Confluent Cloud) para mensageria.
 
-###?Arquitetura da Solução
+### Arquitetura da Solução
 
-A solução segue uma arquitetura de pipelines em camadas (Medallion Architecture) para garantir processamento em larga escala, resiliência e qualidade dos dados:
-	1.	Landing → Bronze
+- A solução segue uma arquitetura de pipelines em camadas (Medallion Architecture) para garantir processamento em larga escala, resiliência e qualidade dos dados:
+#### 1.	Landing → Bronze
 	•	Recebe dados brutos em tempo real de um tópico Kafka (iot_sensors_landing).
 	•	Dados enviados por um Producer em Python que simula sensores usando a biblioteca Faker (temperatura, umidade, localização, etc.).
-	2.	Bronze → Silver
+#### 2.	Bronze → Silver
 	•	Transformações em PySpark para normalizar tipos, tratar campos nulos e converter timestamps.
-	3.	Persistência
+#### 3.	Persistência
     	•	Dados processados armazenados em tabelas Unity Catalog no Databricks.
 
 ### Decisões de Implementação
