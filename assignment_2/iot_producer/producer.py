@@ -30,7 +30,9 @@ class IotFakeProducer:
         producer = Producer(self._get_kafka_configs(self.configs))
         message_key = str(random.randint(1, 1000)).encode("utf-8")
         message = self._generate_fake_messages(message_key)
-        producer.produce(self.configs.get("TOPIC"), value=message, key=message_key)
+        producer.produce(
+            self.configs.get("TOPIC"), value=message, key=message_key.decode("utf-8")
+        )
         logging.info(
             f"Produced message: {message}, to topic: {self.configs.get('TOPIC')}"
         )
