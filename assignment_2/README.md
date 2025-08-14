@@ -37,3 +37,4 @@ A solução segue uma arquitetura de pipelines em camadas (**Medallion Architect
   - Maior isolamento de estágios de processamento.  
   - Melhor organização para execução como jobs independentes.  
   - Facilidade de manutenção e evolução futura.
+- Adicionar uma camada chamada quality_silver para salvar dados que possam fugir dos padrões de qualidade (schema, nulos etc) estabelecidos em um data contract 
